@@ -7,7 +7,10 @@
       </div>
       <div>
         <el-dropdown @command="handleLogin">
-          <i class="el-icon-setting" style="margin-right: 15px;"></i>
+          <i
+            class="el-icon-setting"
+            style="margin-right: 15px; color: #ffffff;"
+          ></i>
           <el-dropdown-menu>
             <el-dropdown-item command="userInfo">查看</el-dropdown-item>
             <el-dropdown-item command="logout">退出</el-dropdown-item>
@@ -23,43 +26,76 @@
       >
         <div class="toggle-button" @click="toggleCollapse">|||</div>
         <el-menu
-          :default-openeds="['1', '3']"
+          background-color="#eef1f6"
+          :default-active="activePath"
           unique-opened
           :collapse="isCollapse"
           :collapse-transition="false"
+          router
         >
-          <el-submenu index="1">
-            <template slot="title"
-              ><i class="el-icon-message"></i>
-              <span>一级导航1</span>
-            </template>
-            <el-menu-item index="1-1">二级导航1.1</el-menu-item>
-            <el-menu-item index="1-2">二级导航1.2</el-menu-item>
-          </el-submenu>
-          <el-submenu index="2">
-            <template slot="title"
-              ><i class="el-icon-message"></i>
-              <span>一级导航2</span>
-            </template>
-            <el-menu-item index="2-1">二级导航2.1</el-menu-item>
-            <el-submenu index="2-2">
+          <!--循环一级菜单-->
+          <template v-for="firstMenu in menulist">
+            <!--判断一级菜单是否有子菜单（没有的情况）-->
+            <el-menu-item
+              :index="'/' + firstMenu.moduleUrl"
+              :key="firstMenu.id"
+              v-if="!firstMenu.children"
+              @click="saveNavState('/' + firstMenu.moduleUrl)"
+            >
+              <i class="el-icon-s-operation"></i>
+              <span slot="title">{{ firstMenu.moduleName }}</span>
+            </el-menu-item>
+            <!--判断一级菜单是否有子菜单（有的情况）-->
+            <el-submenu
+              :index="firstMenu.id"
+              :key="firstMenu.id"
+              v-if="firstMenu.children"
+            >
               <template slot="title"
-                ><i class="el-icon-message"></i>二级导航2.2
+                ><i class="el-icon-s-operation"></i>
+                <span>{{ firstMenu.moduleName }}</span>
               </template>
-              <el-menu-item index="2-2-1">三级导航2.2.1</el-menu-item>
-              <el-menu-item index="2-2-2">三级导航2.2.2</el-menu-item>
+              <!--循环二级菜单-->
+              <template v-for="secondMenu in firstMenu.children">
+                <!--判断二级菜单是否有子菜单（没有的情况）-->
+                <el-menu-item
+                  :index="'/' + secondMenu.moduleUrl"
+                  v-if="!secondMenu.children"
+                  :key="secondMenu.id"
+                  @click="saveNavState('/' + secondMenu.moduleUrl)"
+                >
+                  <template slot="title"
+                    ><i class="el-icon-menu"></i
+                    ><span>{{ secondMenu.moduleName }}</span>
+                  </template>
+                </el-menu-item>
+                <!--判断二级菜单是否有子菜单（有的情况）-->
+                <el-submenu
+                  :index="secondMenu.id"
+                  v-if="secondMenu.children"
+                  :key="secondMenu.id"
+                >
+                  <template slot="title"
+                    ><i class="el-icon-menu"></i
+                    ><span>{{ secondMenu.moduleName }}</span>
+                  </template>
+                  <!--循环三级菜单-->
+                  <el-menu-item
+                    :index="'/' + thirdMenu.moduleUrl"
+                    v-for="thirdMenu in secondMenu.children"
+                    :key="thirdMenu.id"
+                    @click="saveNavState('/' + thirdMenu.moduleUrl)"
+                    ><span>{{ thirdMenu.moduleName }}</span></el-menu-item
+                  >
+                </el-submenu>
+              </template>
             </el-submenu>
-          </el-submenu>
+          </template>
         </el-menu>
       </el-aside>
       <el-main>
-        <el-table :data="tableData">
-          <el-table-column prop="date" label="日期" width="140">
-          </el-table-column>
-          <el-table-column prop="name" label="姓名" width="120">
-          </el-table-column>
-          <el-table-column prop="address" label="地址"></el-table-column>
-        </el-table>
+        <!--Main 子路由显示区-->
+        <router-view></router-view>
       </el-main>
     </el-container>
   </el-container>
@@ -69,17 +105,21 @@
 import Storage from '../assets/js/storage'
 export default {
   data() {
-    const item = {
-      date: '2020-07-23',
-      name: 'colin',
-      address: '北京市海淀区大钟寺'
-    }
     return {
-      tableData: Array(10).fill(item),
-      isCollapse: false
+      activePath: Storage.sessionGet('activePath'),
+      isCollapse: false,
+      // 左侧菜单数据
+      menulist: []
     }
   },
+  created() {
+    this.getMenuList()
+  },
   methods: {
+    async getMenuList() {
+      const { data: res } = await this.$axios.get('menuManage/menus')
+      this.menulist = res.data
+    },
     handleLogin(command) {
       if (command === 'logout') {
         Storage.localRemove('Authorization')
@@ -89,6 +129,10 @@ export default {
     },
     toggleCollapse() {
       this.isCollapse = !this.isCollapse
+    },
+    saveNavState(activePath) {
+      this.activePath = activePath
+      Storage.sessionSet('activePath', activePath)
     }
   }
 }
@@ -96,8 +140,8 @@ export default {
 
 <style lang="less" scoped>
 .el-header {
-  background-color: #b3c0d1;
-  color: #333;
+  background-color: #3771bb;
+  color: #ffffff;
   line-height: 60px;
   display: flex;
   justify-content: space-between;
