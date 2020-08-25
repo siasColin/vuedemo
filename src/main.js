@@ -9,6 +9,8 @@ import axios from 'axios'
 import qs from 'qs'
 import Storage from './assets/js/storage'
 import Common from './assets/js/common'
+import Nprogress from 'nprogress'
+import 'nprogress/nprogress.css'
 
 Vue.use(ElementUI)
 Vue.config.productionTip = false
@@ -24,6 +26,9 @@ axios.defaults.headers.post['Content-Type'] =
 // 添加请求拦截器
 axios.interceptors.request.use(
   function (config) {
+    // 展示进度条
+    Nprogress.start()
+    console.log(config)
     // 在发送请求之前做些什么
     var authorization = Storage.localGet('Authorization')
     var refresh_token = Storage.localGet('Refresh_token')
@@ -36,12 +41,21 @@ axios.interceptors.request.use(
     return config
   },
   function (error) {
+    // 隐藏进度条
+    Nprogress.done()
     console.log(error)
   }
 )
 // 添加响应拦截器
 axios.interceptors.response.use(
   function (response) {
+    // token 验证失败
+    if (
+      response.data.returnCode === '001' ||
+      response.data.returnCode === '002'
+    ) {
+      // router.push('/403')
+    }
     // 对响应数据做点什么
     var authorization = response.headers.authorization
     var refresh_token = response.headers.refresh_token
@@ -51,9 +65,13 @@ axios.interceptors.response.use(
     if (!Common.isEmpty(refresh_token)) {
       Storage.localSet('Refresh_token', refresh_token)
     }
+    // 隐藏进度条
+    Nprogress.done()
     return response
   },
   function (error) {
+    // 隐藏进度条
+    Nprogress.done()
     // 对响应错误做点什么
     console.log(error)
   }

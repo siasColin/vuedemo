@@ -43,6 +43,8 @@
 </template>
 
 <script>
+import Storage from '@/assets/js/storage'
+
 export default {
   data() {
     return {
@@ -72,6 +74,7 @@ export default {
             .post('login', params)
             .then((res) => {
               if (res.data.returnCode === '0') {
+                Storage.sessionRemove('activePath')
                 this.$router.push('/main')
               } else {
                 // Element 为 Vue.prototype 添加了全局方法 $message。因此在 vue instance 中可以采用本页面中的方式调用 Message
@@ -86,7 +89,7 @@ export default {
               console.log('登录失败' + error)
               return this.$message({
                 showClose: true,
-                message: '登录失败' + error,
+                message: '登录失败',
                 type: 'warning'
               })
             })

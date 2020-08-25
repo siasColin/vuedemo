@@ -124,6 +124,7 @@ export default {
       if (command === 'logout') {
         Storage.localRemove('Authorization')
         Storage.localRemove('Refresh_token')
+        Storage.sessionRemove('activePath')
         this.$router.push('/login')
       }
     },
